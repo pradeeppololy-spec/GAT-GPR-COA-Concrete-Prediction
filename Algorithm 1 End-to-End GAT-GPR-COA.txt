@@ -1,0 +1,49 @@
+Algorithm 1: End-to-End GAT-GPR-COA Training and Multi-Output Prediction Framework
+---------------------------------------------------------------------------------
+Input  : Small experimental dataset D_exp (10 mix designs M0–M9)
+         Mix proportions matrix X_raw, Categorical mix labels c
+Output : Optimized GAT-GPR model ensemble, Predictor F*(G*), 95% Credible Intervals
+
+1:  /* Step 1: Deep Generative Data Augmentation */
+2:  Train Conditional Variational Autoencoder (CVAE) on X_raw conditioned on labels c
+3:  Generate N_syn = 650 synthetic mix proportions by sampling latent space z ~ N(0, I)
+4:  Validate fidelity using Maximum Mean Discrepancy (MMD) analysis (Threshold < 0.013)
+5:  Apply Mahalanobis distance screening to remove outliers -> Refined corpus D_aug (641 mixes)
+6:  Partition D_aug into Train (65%), Validation (15%), and Test (20%) subsets
+
+7:  /* Step 2: Material Composition Graph Construction */
+8:  For each mix in D_aug:
+9:      Construct heterogeneous graph G = (V, E, X, A)
+10:     Assign 7 constituent nodes V (Cement, PET, FA, RHA, CA, Water, SP)
+11:     Compute directed edge attributes A_ij using normalized absolute Pearson coefficients
+
+12: /* Step 3: Joint Hyperparameter Co-Optimization via COA */
+13: Initialize Coati population P = {X_1, X_2, ..., X_50} in 15-dimensional hybrid search space
+14: Define Fitness Function Objective(X):
+15:     Extract GAT & GPR hyperparameters from candidate vector X
+16:     Initialize 3 Graph Attention layers (L=3, K=4 heads) + DiffPool Layer
+17:     Initialize Multi-Output GPR with Matérn-5/2 + Rational Quadratic composite kernel
+18:     Evaluate model using 5-fold cross-validation on the training partition
+19:     Return Mean Validation RMSE across all 6 target mechanico-durability properties
+20: End Function
+
+21: For iteration t = 1 to 200 do:
+22:     For each coati agent i = 1 to 50 do:
+23:         Phase 1 (Tree Climb): Update position using tree climbing exploration logic
+24:         Phase 2 (Prey Pursuit): Perform localized exploitation towards the best neighborhood
+25:         Phase 3 (Predator Evasion): Inject heavy-tailed Lévy Flight steps to evade stagnation
+26:         Phase 4 (Random Walk): Apply stochastic perturbations for local intensification
+27:         Evaluate Objective(X_i) and update the global best hyperparameter set (g_best)
+28:     End For
+29: End For
+
+30: /* Step 4: Final Training and Probabilistic Inference */
+31: Instantiate the optimal GAT-GPR-COA framework using configuration g_best
+32: Train the architecture fully on the finalized training set
+33: For each unseen test graph G* do:
+34:     Extract graph-level continuous latent embedding vector g* via GAT and DiffPool
+35:     Compute GPR posterior mean point prediction: m* = k(g*, G)[k(G, G) + σ_n^2 * I]^-1 * y
+36:     Compute GPR posterior variance: σ*^2 = k(g*, g*) - k(g*, G)[k(G, G) + σ_n^2 * I]^-1 * k(G, g*)
+37:     Construct 95% analytical Credible Intervals: CI_95 = [m* - 1.96*σ*, m* + 1.96*σ*]
+38: End For
+---------------------------------------------------------------------------------
